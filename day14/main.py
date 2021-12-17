@@ -1,7 +1,7 @@
 import os
 import sys
 from posixpath import split
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 
 def read_input_file(filename: str) -> List[str]:
@@ -22,7 +22,6 @@ def process_polymer(polymer: str, pair_insertions: Dict[str, str], steps: int) -
                 new_polymer += pair_insertions[pair] + element
             else:
                 new_polymer += element
-        print(f"{len(new_polymer) == len(polymer_tmp) * 2 - 1}")
         polymer_tmp = new_polymer
     return new_polymer
 
@@ -45,8 +44,49 @@ def part_one(polymer_template: str, pair_insertions: Dict[str, str]) -> str:
     )
 
 
+def find_pairs_in_polymer(
+    pairs_in_polymer: Dict[str, int],
+    resulting_pairs: Dict[str, Tuple[str, str]],
+    pair_insertions: Dict[str, str],
+    elements_in_polymer: Dict[str, int]
+) -> Dict[str, int]:
+
+    new_pairs_in_polymer = {}
+
+    for pair, occurrences in pairs_in_polymer.items():
+        for resulting_pair in resulting_pairs[pair]:
+            new_pairs_in_polymer[resulting_pair] = new_pairs_in_polymer.get(resulting_pair, 0) + occurrences
+        new_element = pair_insertions[pair]
+        elements_in_polymer[new_element] = elements_in_polymer.get(new_element, 0) + occurrences
+
+    return new_pairs_in_polymer
+
+
 def part_two(polymer_template: str, pair_insertions: Dict[str, str]) -> str:
-    pass
+    resulting_pairs = {
+        pair: (pair[0] + insertion, insertion + pair[1])
+        for pair, insertion in pair_insertions.items()
+    }
+    pairs_in_polymer = {
+        pair: polymer_template.count(pair)
+        for pair in pair_insertions.keys()
+        if polymer_template.count(pair) != 0
+    }
+    elements_in_polymer = {
+        element: polymer_template.count(element)
+        for element in polymer_template
+    }
+
+    for _ in range(40):
+        pairs_in_polymer = find_pairs_in_polymer(pairs_in_polymer, resulting_pairs, pair_insertions, elements_in_polymer)
+
+    most_occurring_element = max(elements_in_polymer, key=elements_in_polymer.get)
+    least_occurring_element = min(elements_in_polymer, key=elements_in_polymer.get)
+
+    print(
+        f"Part two: {elements_in_polymer[most_occurring_element] - elements_in_polymer[least_occurring_element]}"
+    )
+
 
 
 def main(argv: str):
